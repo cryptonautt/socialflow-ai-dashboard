@@ -7,6 +7,7 @@ export enum ConfigKey {
   FEATURE_AI_GENERATOR = 'FEATURE_AI_GENERATOR',
   MAINTENANCE_MODE = 'MAINTENANCE_MODE',
   CACHE_TTL = 'CACHE_TTL',
+  ADMIN_IP_WHITELIST = 'ADMIN_IP_WHITELIST',
 }
 
 export type ConfigType = 'string' | 'number' | 'boolean' | 'json';
@@ -154,6 +155,7 @@ export class DynamicConfigService {
       [ConfigKey.FEATURE_AI_GENERATOR]: true,
       [ConfigKey.MAINTENANCE_MODE]: false,
       [ConfigKey.CACHE_TTL]: 3600,
+      [ConfigKey.ADMIN_IP_WHITELIST]: '',
     };
     return defaults[key] ?? null;
   }

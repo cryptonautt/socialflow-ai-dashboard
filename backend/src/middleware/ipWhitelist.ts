@@ -3,6 +3,7 @@ import requestIp from 'request-ip';
 import ipaddr from 'ipaddr.js';
 import { getAdminIpWhitelist } from '../config/runtime';
 import { createLogger } from '../lib/logger';
+import { dynamicConfigService, ConfigKey } from '../services/DynamicConfigService';
 
 const logger = createLogger('middleware:ipWhitelist');
 
@@ -13,13 +14,21 @@ const logger = createLogger('middleware:ipWhitelist');
  */
 export const ipWhitelistMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const clientIp = requestIp.getClientIp(req);
-  const whitelist = getAdminIpWhitelist();
+  
+  // Fetch from ENV
+  const envWhitelist = getAdminIpWhitelist();
+  
+  // Fetch from DB
+  const dbWhitelistRaw = dynamicConfigService.get<string>(ConfigKey.ADMIN_IP_WHITELIST, '');
+  const dbWhitelist = dbWhitelistRaw
+    .split(',')
+    .map((val) => val.trim())
+    .filter(Boolean);
 
-  // If no whitelist is configured, allow all by default (per conventional security or block?)
-  // Given the requirement "Restrict access... to specific... IP addresses", 
-  // if the list is empty, we might want to log a warning but allow access if not in production.
-  // For strictness, if the list is expected but empty, we could block.
-  // However, usually, an empty list means the feature is disabled.
+  // Merge and de-duplicate
+  const whitelist = Array.from(new Set([...envWhitelist, ...dbWhitelist]));
+
+  // If no whitelist is configured, allow all by default
   if (whitelist.length === 0) {
     return next();
   }
